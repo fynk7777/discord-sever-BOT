@@ -1,5 +1,4 @@
 import discord
-import requests
 from keep_alive import keep_alive
 
 # Discord Botのトークン
@@ -8,8 +7,12 @@ TOKEN = 'あなたのDiscordボットのトークン'
 # CohereのAPIトークン
 COHERE_API_TOKEN = 'あなたのCohereのAPIトークン'
 
+# Intentsの設定
+intents = discord.Intents.default()
+intents.dm_messages = True  # DMメッセージを受信するための設定
+
 # Discordクライアントの初期化
-client = discord.Client()
+client = discord.Client(intents=intents)
 
 @client.event
 async def on_ready():
