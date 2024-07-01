@@ -1,12 +1,16 @@
 import discord
-import os  # osモジュールのインポート
+import os
+import aiohttp
+import asyncio
 from keep_alive import keep_alive
 
 # Discord Botのトークン
 TOKEN = os.getenv("DISCORD_TOKEN")
-
-# CohereのAPIトークン
 COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
+
+# トークンの確認（デバッグ用）
+print(f'DISCORD_TOKEN: {TOKEN}')
+print(f'COHERE_API_TOKEN: {COHERE_API_TOKEN}')
 
 # Intentsの設定
 intents = discord.Intents.default()
@@ -26,28 +30,46 @@ async def on_message(message):
 
     if isinstance(message.channel, discord.DMChannel):
         # メッセージをCohereのAPIに送信してレスポンスを取得
-        cohere_response = send_to_cohere(message.content)
+        cohere_response = await send_to_cohere(message.content)
 
         # Cohereのレスポンスを返信
         await message.author.send(cohere_response)
 
-def send_to_cohere(input_text):
-    url = 'https://api.cohere.ai/bots/respond'
+async def send_to_cohere(input_text):
+    url = 'https://api.cohere.ai/v1/generate'  # 正しいエンドポイントを使用
     headers = {
-        'Authorization': f'Token {COHERE_API_TOKEN}',
+        'Authorization': f'Bearer {COHERE_API_TOKEN}',  # 正しい形式のAPIキーを使用
         'Content-Type': 'application/json'
     }
     data = {
-        'prompt': input_text
+        'prompt': input_text,
+        'model': 'command-nightly',  # 使用するモデルの指定（Cohereのドキュメントに基づく）
+        'max_tokens': 50    # 最大トークン数の指定
     }
 
-    response = requests.post(url, headers=headers, json=data)
+    print("Sending request to Cohere API...")
+    print(f"Headers: {headers}")
+    print(f"Data: {data}")
 
-    if response.status_code == 200:
-        return response.json()['text']
-    else:
-        return '申し訳ありませんが、現在リクエストを処理できませんでした。'
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, headers=headers, json=data) as response:
+                print(f"Response status: {response.status}")
+                if response.status == 200:
+                    response_json = await response.json()
+                    print(f"Response JSON: {response_json}")
+                    return response_json.get('text', '申し訳ありませんが、現在リクエストを処理できませんでした。')
+                else:
+                    error_message = await response.text()
+                    print(f'エラーが発生しました: {response.status} - {error_message}')
+                    return f'エラーが発生しました: {response.status} - {error_message}'
+        except Exception as e:
+            print(f'エラーが発生しました: {e}')
+            return '申し訳ありませんが、現在リクエストを処理できませんでした。'
 
 # Discordボットの起動とHTTPサーバーの起動
-keep_alive()
-client.run(TOKEN)
+try:
+    keep_alive()
+    client.run(TOKEN)
+except Exception as e:
+    print(f'エラーが発生しました: {e}')
