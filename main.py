@@ -58,7 +58,8 @@ async def send_to_cohere(input_text):
                 if response.status == 200:
                     response_json = await response.json()
                     print(f"Response JSON: {response_json}")
-                    return response_json.get('text', '申し訳ありませんが、現在リクエストを処理できませんでした。')
+                    # 'text'を取得する部分を修正
+                    return response_json['generations'][0]['text']
                 else:
                     error_message = await response.text()
                     print(f'エラーが発生しました: {response.status} - {error_message}')
