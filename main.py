@@ -2,10 +2,10 @@ import discord
 from keep_alive import keep_alive
 
 # Discord Botのトークン
-TOKEN = 'あなたのDiscordボットのトークン'
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 # CohereのAPIトークン
-COHERE_API_TOKEN = 'あなたのCohereのAPIトークン'
+COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
 
 # Intentsの設定
 intents = discord.Intents.default()
