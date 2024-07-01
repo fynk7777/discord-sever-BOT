@@ -15,6 +15,7 @@ print(f'COHERE_API_TOKEN: {COHERE_API_TOKEN}')
 # Intentsの設定
 intents = discord.Intents.default()
 intents.dm_messages = True  # DMメッセージを受信するための設定
+intents.messages = True      # サーバーでのメッセージを受信するための設定
 
 # Discordクライアントの初期化
 client = discord.Client(intents=intents)
@@ -29,11 +30,17 @@ async def on_message(message):
         return
 
     if isinstance(message.channel, discord.DMChannel):
-        # メッセージをCohereのAPIに送信してレスポンスを取得
+        # DMメッセージをCohereのAPIに送信してレスポンスを取得
         cohere_response = await send_to_cohere(message.content)
 
         # Cohereのレスポンスを返信
         await message.author.send(cohere_response)
+    elif client.user in message.mentions:
+        # メンションされたメッセージをCohereのAPIに送信してレスポンスを取得
+        cohere_response = await send_to_cohere(message.content)
+
+        # Cohereのレスポンスを返信
+        await message.channel.send(f'{message.author.mention} {cohere_response}')
 
 async def send_to_cohere(input_text):
     url = 'https://api.cohere.ai/v1/generate'  # 正しいエンドポイントを使用
