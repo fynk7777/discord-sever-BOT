@@ -1,4 +1,5 @@
-discord.py
+discord.py==2.4.0
 requests
 flask
-discord.py==2.4.0
+aiohttp
+python-dotenv
