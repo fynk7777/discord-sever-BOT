@@ -1,4 +1,5 @@
 import discord
+import os  # osモジュールのインポート
 from keep_alive import keep_alive
 
 # Discord Botのトークン
