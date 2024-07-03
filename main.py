@@ -45,7 +45,7 @@ async def on_ready():
     except Exception as e:
         print(f'Error syncing commands: {e}')
 
-@bot.tree.command(name="add", description="Add a word to the respond list (role only)")
+@bot.tree.command(name="add", description="禁止単語を追加します(Lounge staffのみ)")
 async def add(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -59,7 +59,7 @@ async def add(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="remove", description="Remove a word from the respond list (role only)")
+@bot.tree.command(name="remove", description="禁止単語を削除します(Lounge staffのみ)")
 async def remove(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -73,7 +73,7 @@ async def remove(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="list", description="Show the list of respond words")
+@bot.tree.command(name="list", description="禁止単語一覧を表示させます")
 async def list_words(interaction: discord.Interaction):
     if respond_words:
         words_str = "\n".join(respond_words)
