@@ -111,6 +111,36 @@ async def openout(interaction: discord.Interaction, user: discord.Member):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
+@bot.tree.command(name="openall", description="Show the count of inappropriate words used by all users (role only) - Visible to everyone")
+async def openall(interaction: discord.Interaction):
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
+        if sorted_counts:
+            result = "\n".join(f"{guild.get_member(item[0]).name}: {item[1]} 回" for item in sorted_counts)
+            await interaction.response.send_message(f"不適切な単語の使用回数 (多い順):\n{result}")
+        else:
+            await interaction.response.send_message("まだ不適切な単語の使用はありません。")
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+
+@bot.tree.command(name="hideall", description="Show the count of inappropriate words used by all users (role only) - Hidden from others")
+async def hideall(interaction: discord.Interaction):
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
+        if sorted_counts:
+            result = "\n".join(f"{guild.get_member(item[0]).name}: {item[1]} 回" for item in sorted_counts)
+            await interaction.response.send_message(f"不適切な単語の使用回数 (多い順):\n{result}", ephemeral=True)
+        else:
+            await interaction.response.send_message("まだ不適切な単語の使用はありません。", ephemeral=True)
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
