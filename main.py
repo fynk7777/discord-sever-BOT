@@ -12,9 +12,6 @@ from keep_alive import keep_alive
 TOKEN = os.getenv("DISCORD_TOKEN")
 COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
 
-# 追加する禁止単語リスト
-banned_words = ["死ね", "禁止ワード2", "禁止ワード3"]
-
 # 画像を送信するチャンネルのID
 TARGET_CHANNEL_ID = 1257585023125684256  # 画像を格納しているチャンネルのIDを設定する
 
@@ -99,11 +96,6 @@ async def on_message(message):
         except Exception as e:
             print(f'Error occurred: {e}')
             await channel.send("画像の送信中にエラーが発生しました。")
-    
-    # 追加：禁止単語のチェック
-    for word in banned_words:
-        if word in message.content:
-            await message.channel.send(f'{message.author.mention} さん、"{word}" という単語は不適切です。')
 
     # BUMP通知機能
     if message.author.id == 302050872383242240:
@@ -164,74 +156,6 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
-
-# コマンドの定義
-@bot.command(name='word', help='禁止ワードを追加または削除します')
-async def word(ctx):
-    embed = discord.Embed(title='禁止ワード管理',
-                          description='どの操作を行いますか？',
-                          color=0x00BFFF)
-    embed.add_field(name='1️⃣ 追加', value='禁止ワードを追加します', inline=False)
-    embed.add_field(name='2️⃣ 削除', value='禁止ワードを削除します', inline=False)
-
-    await ctx.send(embed=embed)
-
-    def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
-
-    try:
-        msg = await bot.wait_for('message', timeout=60.0, check=check)
-    except asyncio.TimeoutError:
-        await ctx.send('操作がタイムアウトしました。もう一度試してください。')
-        return
-
-    choice = msg.content.lower()
-    if choice == '1' or choice == '追加':
-        await add_word(ctx)
-    elif choice == '2' or choice == '削除':
-        await remove_word(ctx)
-    else:
-        await ctx.send('無効な選択です。もう一度試してください。')
-
-async def add_word(ctx):
-    await ctx.send('追加する禁止ワードを入力してください。')
-
-    def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
-
-    try:
-        msg = await bot.wait_for('message', timeout=60.0, check=check)
-    except asyncio.TimeoutError:
-        await ctx.send('操作がタイムアウトしました。もう一度試してください。')
-        return
-
-    word = msg.content.strip()
-    if word:
-        if word not in banned_words:
-            banned_words.append(word)
-            await ctx.send(f'"{word}" を禁止ワードに追加しました。')
-        else:
-            await ctx.send(f'"{word}" は既に禁止ワードです。')
-
-async def remove_word(ctx):
-    await ctx.send('削除する禁止ワードを入力してください。')
-
-    def check(msg):
-        return msg.author == ctx.author and msg.channel == ctx.channel
-
-    try:
-        msg = await bot.wait_for('message', timeout=60.0, check=check)
-    except asyncio.TimeoutError:
-        await ctx.send('操作がタイムアウトしました。もう一度試してください。')
-        return
-
-    word = msg.content.strip()
-    if word:
-        if word in banned_words:
-            banned_words.remove(word)
-            await ctx.send(f'"{word}" を禁止ワードから削除しました。')
-        else:
-            await ctx.send(f'"{word}" は禁止ワードではありません。')
 
 # Discordボットの起動とHTTPサーバーの起動
 try:
