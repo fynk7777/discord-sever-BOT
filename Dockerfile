@@ -12,5 +12,7 @@ COPY requirements.txt .
 # Pythonパッケージをインストール
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY . .
+
 # コンテナを起動し、ボットを実行
 CMD ["python", "main.py"]
