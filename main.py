@@ -1,10 +1,10 @@
 import discord
-from discord.ext import commands
 import os
 import aiohttp
 import asyncio
 import random
 import io
+from discord.ext import commands
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 
@@ -25,77 +25,85 @@ intents.members = True
 
 # Botクライアントの初期化
 bot = commands.Bot(command_prefix='/', intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents)
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
 
+respond_words = []
+# 応答ワードのリストを読み込む
+role_name = "Lounge staff"
+# 起動時に動作する処理
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} としてログインしました^o^')
+    try:
+        synced = await bot.tree.sync()
+        print(f'Synced {len(synced)} commands')
+    except Exception as e:
+        print(f'Error syncing commands: {e}')
+
+@bot.tree.command(name="add", description="Add a word to the respond list (role only)")
+async def add(interaction: discord.Interaction, word: str):
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        if word and word not in respond_words:
+            respond_words.append(word)
+            await interaction.response.send_message(f'「{word}」を禁止単語リストに追加しました。')
+        else:
+            await interaction.response.send_message('その単語は既にリストに存在するか、無効な単語です。')
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+
+@bot.tree.command(name="remove", description="Remove a word from the respond list (role only)")
+async def remove(interaction: discord.Interaction, word: str):
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        if word in respond_words:
+            respond_words.remove(word)
+            await interaction.response.send_message(f'「{word}」を禁止単語リストから削除しました。')
+        else:
+            await interaction.response.send_message('その単語はリストに存在しません。')
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+
+@bot.tree.command(name="list", description="Show the list of respond words")
+async def list_words(interaction: discord.Interaction):
+    if respond_words:
+        words_str = "\n".join(respond_words)
+        await interaction.response.send_message(f'現在の禁止単語リスト:\n{words_str}')
+    else:
+        await interaction.response.send_message('現在、禁止単語は登録されていません。')
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
 
+    # word_message の処理
+    for word in respond_words:
+        if word in message.content:
+            await message.reply(f'その({word})という言葉は不適切です。禁止単語リストに含まれています')
+            break
+
     # AIによる応答
     if bot.user in message.mentions:
         for mention in message.mentions:
             if mention == bot.user:
                 response = await send_to_cohere(message.content)
+                print(f'AIによる応答: {response}')
                 await message.reply(response)  # メンションしたコメントに対して返信する
                 break
 
-        
-    @bot.event
-    async def on_message(message):
-        print(f'Message from {message.author}: {message.content}')  # デバッグ用のログ
-        if message.author == bot.user:
-            return
-
-        elif message.content == 'ハゲ':
-            await send_random_image(message.channel)
-
-    async def send_random_image(channel):
-        target_channel = bot.get_channel(TARGET_CHANNEL_ID)
-        if not target_channel:
-            await channel.send("ターゲットチャンネルが見つかりませんでした。")
-            return
-
-        images = []
-
-        async for msg in target_channel.history(limit=None):
-            print(f'Checking message from {msg.author}: {msg.content}')  # メッセージ内容のログ
-            for attachment in msg.attachments:
-                print(f'Found attachment: {attachment.url}')  # 画像URLのログ
-                print(f'Attachment details: {attachment}')  # 添付ファイルの詳細をログに出力
-                images.append(attachment.url)  # URLを画像リストに追加
-                print(f'Added to images list: {attachment.url}')  # 画像リストに追加されたことをログに出力
-
-        print(f'Images list: {images}')  # 画像リストの内容を出力するログ
-
-        if not images:
-            await channel.send("画像が見つかりませんでした。")
-            return
-
-        selected_image = random.choice(images)
-        print(f'Selected image: {selected_image}')  # 選択された画像URLのログ
-
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(selected_image) as resp:
-                    if resp.status != 200:
-                        print(f'Failed to download image: {resp.status}')
-                        await channel.send("画像のダウンロードに失敗しました。")
-                        return
-                    data = await resp.read()
-
-            await channel.send(file=discord.File(io.BytesIO(data), 'image.png'))
-        except Exception as e:
-            print(f'Error occurred: {e}')
-            await channel.send("画像の送信中にエラーが発生しました。")
+    # 画像を送信する処理
+    if message.content == 'ハゲ':
+        await send_random_image(message.channel)
 
     # BUMP通知機能
     if message.author.id == 302050872383242240:
@@ -105,6 +113,45 @@ async def on_message(message):
                 await handle_bump_notification(message)
 
     await bot.process_commands(message)
+
+async def send_random_image(channel):
+    target_channel = bot.get_channel(TARGET_CHANNEL_ID)
+    if not target_channel:
+        await channel.send("ターゲットチャンネルが見つかりませんでした。")
+        return
+
+    images = []
+
+    async for msg in target_channel.history(limit=None):
+        print(f'Checking message from {msg.author}: {msg.content}')  # メッセージ内容のログ
+        for attachment in msg.attachments:
+            print(f'Found attachment: {attachment.url}')  # 画像URLのログ
+            print(f'Attachment details: {attachment}')  # 添付ファイルの詳細をログに出力
+            images.append(attachment.url)  # URLを画像リストに追加
+            print(f'Added to images list: {attachment.url}')  # 画像リストに追加されたことをログに出力
+
+    print(f'Images list: {images}')  # 画像リストの内容を出力するログ
+
+    if not images:
+        await channel.send("画像が見つかりませんでした。")
+        return
+
+    selected_image = random.choice(images)
+    print(f'Selected image: {selected_image}')  # 選択された画像URLのログ
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(selected_image) as resp:
+                if resp.status != 200:
+                    print(f'Failed to download image: {resp.status}')
+                    await channel.send("画像のダウンロードに失敗しました。")
+                    return
+                data = await resp.read()
+
+            await channel.send(file=discord.File(io.BytesIO(data), 'image.png'))
+    except Exception as e:
+        print(f'Error occurred: {e}')
+        await channel.send("画像の送信中にエラーが発生しました。")
 
 async def send_to_cohere(input_text):
     url = 'https://api.cohere.ai/v1/generate'  # 正しいエンドポイントを使用
@@ -151,7 +198,7 @@ async def handle_bump_notification(message):
     await asyncio.sleep(7200)
     notice_embed = discord.Embed(
         title="BUMPが可能です！",
-        description=f"</bump:947088344167366698> でBUMPできます",
+        description="</bump:947088344167366698> でBUMPできます",
         color=0x00BFFF,
         timestamp=datetime.now()
     )
