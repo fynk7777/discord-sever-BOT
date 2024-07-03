@@ -5,7 +5,7 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "Discord Bot is alive!"
+    return "BOTは起動しています"
 
 def run():
     app.run(host="0.0.0.0", port=8080)
