@@ -33,7 +33,7 @@ client = discord.Client(intents=intents)
 #カスタム返信のリストを初期化
 custom_replies = {}
 
-respond_words = ["死ね","殺す","@youchan0803","fack"]
+respond_words = ["死ね","殺す","<@1237354152342978600>","fack"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
 
@@ -42,7 +42,7 @@ user_word_counts = {}
 
 # BOTロールと参加者ロールの名前を定義
 BOT_ROLE_NAME = "BOT"
-PARTICIPANT_ROLE_NAME = "ハゲ(参加者)"
+PARTICIPANT_ROLE_NAME = "参加者"
 
 # 起動時に動作する処理
 @bot.event
