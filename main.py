@@ -39,7 +39,7 @@ user_word_counts = {}
 
 # BOTロールと参加者ロールの名前を定義
 BOT_ROLE_NAME = "BOT"
-PARTICIPANT_ROLE_NAME = "ハゲ"
+PARTICIPANT_ROLE_NAME = "参加者"
 
 # 起動時に動作する処理
 @bot.event
