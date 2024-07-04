@@ -188,8 +188,8 @@ async def word_specific_all(interaction: discord.Interaction):
     else:
             await interaction.response.send_message("まだ不適切な単語の使用はありません。")
 
-@bot.tree.command(name="word_hide_everyone", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
-async def word_hide_everyone(interaction: discord.Interaction):
+@bot.tree.command(name="word_everyone_hide", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
+async def word_everyone_hide(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
     sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
