@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import random
 import io
-from discord.ext import commands,tasks
+from discord.ext import commands
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 
@@ -37,10 +37,6 @@ role_name = "Lounge staff"
 # ユーザーごとの不適切な単語使用回数を記録する辞書
 user_word_counts = {}
 
-# BOTロールと参加者ロールの名前を定義
-BOT_ROLE_NAME = "BOT"
-PARTICIPANT_ROLE_NAME = "参加者"
-
 # 起動時に動作する処理
 @bot.event
 async def on_ready():
@@ -50,37 +46,8 @@ async def on_ready():
         print(f'Synced {len(synced)} commands')
     except Exception as e:
         print(f'Error syncing commands: {e}')
-    # ボットが準備完了したらタスクを開始
-    check_members.start()  # この行を追加
-    # bakabonnpapa に DM を送信
-    await send_update_message()
 
-@tasks.loop(seconds=1)  # 1秒ごとにチェック
-async def check_members():
-    for guild in bot.guilds:
-        bot_role = discord.utils.get(guild.roles, name=BOT_ROLE_NAME)
-        participant_role = discord.utils.get(guild.roles, name=PARTICIPANT_ROLE_NAME)
-        if bot_role and participant_role:
-            for member in guild.members:
-                try:
-                    if bot_role in member.roles and participant_role in member.roles:
-                        # BOTロールがついている人から参加者ロールを削除
-                        await member.remove_roles(participant_role)
-                        print(f"Removed {PARTICIPANT_ROLE_NAME} role from {member.name}")
-                    elif bot_role not in member.roles and participant_role not in member.roles:
-                        # BOTロールがついていない人に参加者ロールを追加
-                        await member.add_roles(participant_role)
-                        print(f"Added {PARTICIPANT_ROLE_NAME} role to {member.name}")
-                except discord.errors.Forbidden:
-                    print(f"Failed to modify role for {member.name}: Missing Permissions")
-                except discord.HTTPException as e:
-                    if e.status == 429:
-                        print(f"Too Many Requests: {e}")
-                        await asyncio.sleep(5)  # 5秒待機
-                    else:
-                        print(f"An error occurred: {e}")
-
-@bot.tree.command(name="add", description="Add a word to the respond list (role only)")
+@bot.tree.command(name="add", description=(f"禁止単語を追加します{role_name}のみが使用できます"))
 async def add(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -94,7 +61,7 @@ async def add(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="remove", description="Remove a word from the respond list (role only)")
+@bot.tree.command(name="remove", description=f"禁止単語を削除します{role_name}のみが使用できます")
 async def remove(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -108,7 +75,7 @@ async def remove(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="list", description="Show the list of respond words")
+@bot.tree.command(name="list", description="現在の禁止単語一覧を見れます")
 async def list_words(interaction: discord.Interaction):
     if respond_words:
         words_str = "\n".join(respond_words)
@@ -116,7 +83,7 @@ async def list_words(interaction: discord.Interaction):
     else:
         await interaction.response.send_message('現在、禁止単語は登録されていません。')
 
-@bot.tree.command(name="hideout", description="Show the count of inappropriate words used by a user (role only) - Hidden from others")
+@bot.tree.command(name="hideout", description=f"あなたにだけ特定のプレイヤーの禁止単語使用回数を表示します。{role_name}のみが使用できます")
 async def hideout(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
@@ -130,7 +97,7 @@ async def hideout(interaction: discord.Interaction, user: discord.Member):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="openout", description="Show the count of inappropriate words used by a user (role only) - Visible to everyone")
+@bot.tree.command(name="openout", description=f"全員に特定のプレイヤーの禁止単語使用回数を表示します。{role_name}のみが使用できます")
 async def openout(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
@@ -144,7 +111,7 @@ async def openout(interaction: discord.Interaction, user: discord.Member):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="openall", description="Show the count of inappropriate words used by all users (role only) - Visible to everyone")
+@bot.tree.command(name="openall", description=f"あなたにだけ全員のプレイヤーの禁止単語使用回数を多い順に表示します。{role_name}のみが使用できます")
 async def openall(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
@@ -159,7 +126,7 @@ async def openall(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="hideall", description="Show the count of inappropriate words used by all users (role only) - Hidden from others")
+@bot.tree.command(name="hideall", description=f"全員に全員のプレイヤーの禁止単語使用回数を多い順に表示します。{role_name}のみが使用できます")
 async def hideall(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
@@ -300,11 +267,6 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
-
-async def send_update_message():
-    user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
-    user = await bot.fetch_user(user_id)
-    await user.send("アップデートしました!!")
 
 # Discordボットの起動とHTTPサーバーの起動
 try:
