@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import random
 import io
-from discord.ext import commands
+from discord.ext import commands, tasks
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 
@@ -37,6 +37,10 @@ role_name = "Lounge staff"
 # ユーザーごとの不適切な単語使用回数を記録する辞書
 user_word_counts = {}
 
+# BOTロールと参加者ロールの名前を定義
+BOT_ROLE_NAME = "BOT"
+PARTICIPANT_ROLE_NAME = "ハゲ"
+
 # 起動時に動作する処理
 @bot.event
 async def on_ready():
@@ -46,6 +50,34 @@ async def on_ready():
         print(f'Synced {len(synced)} commands')
     except Exception as e:
         print(f'Error syncing commands: {e}')
+    # ボットが準備完了したらタスクを開始
+    check_members.start()  # この行を追加
+
+@tasks.loop(seconds=10)  # 10秒ごとにチェック
+async def check_members():
+    for guild in bot.guilds:
+        bot_role = discord.utils.get(guild.roles, name=BOT_ROLE_NAME)
+        participant_role = discord.utils.get(guild.roles, name=PARTICIPANT_ROLE_NAME)
+        if bot_role and participant_role:
+            for member in guild.members:
+                if bot_role in member.roles and participant_role in member.roles:
+                    # BOTロールがついている人から参加者ロールを削除
+                    try:
+                        await member.remove_roles(participant_role)
+                        print(f"Removed {PARTICIPANT_ROLE_NAME} role from {member.name}")
+                    except discord.errors.Forbidden:
+                        print(f"Failed to remove role from {member.name}: Missing Permissions")
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
+                elif bot_role not in member.roles and participant_role not in member.roles:
+                    # BOTロールがついていない人に参加者ロールを追加
+                    try:
+                        await member.add_roles(participant_role)
+                        print(f"Added {PARTICIPANT_ROLE_NAME} role to {member.name}")
+                    except discord.errors.Forbidden:
+                        print(f"Failed to add role to {member.name}: Missing Permissions")
+                    except Exception as e:
+                        print(f"An error occurred: {e}")
 
 @bot.tree.command(name="add", description="Add a word to the respond list (role only)")
 async def add(interaction: discord.Interaction, word: str):
