@@ -59,8 +59,8 @@ async def on_ready():
     await send_update_message()
 
 # /addreply コマンドの処理
-@bot.tree.command(name="addreply", description="カスタム返信を追加します")
-async def addreply(interaction: discord.Interaction, trigger: str, response: str):
+@bot.tree.command(name="reply_add", description="カスタム返信を追加します")
+async def reply_add(interaction: discord.Interaction, trigger: str, response: str):
     custom_replies[trigger] = response
     member = interaction.user
     guild = interaction.guild
@@ -71,8 +71,8 @@ async def addreply(interaction: discord.Interaction, trigger: str, response: str
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
 # /removereply コマンドの処理
-@bot.tree.command(name="removereply", description="カスタム返信を削除します")
-async def removereply(interaction: discord.Interaction, trigger: str):
+@bot.tree.command(name="reply_remove", description="カスタム返信を削除します")
+async def reply_remove(interaction: discord.Interaction, trigger: str):
     member = interaction.user
     guild = interaction.guild
     role = discord.utils.get(guild.roles, name=role_name)
@@ -86,8 +86,8 @@ async def removereply(interaction: discord.Interaction, trigger: str):
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
 # /listreply コマンドの処理
-@bot.tree.command(name="listreply", description="カスタム返信リストを表示します")
-async def listreply(interaction: discord.Interaction):
+@bot.tree.command(name="reply_list", description="カスタム返信リストを表示します")
+async def reply_list(interaction: discord.Interaction):
     if custom_replies:
         reply_list = '\n'.join([f'{trigger} -> {response}' for trigger, response in custom_replies.items()])
         await interaction.response.send_message(f'カスタム返信リスト:\n{reply_list}')
@@ -121,8 +121,8 @@ async def check_members():
                     else:
                         print(f"An error occurred: {e}")
 
-@bot.tree.command(name="add", description=f"禁止単語を追加します({role_name}だけが使用できます)")
-async def add(interaction: discord.Interaction, word: str):
+@bot.tree.command(name="word_add", description=f"禁止単語を追加します({role_name}だけが使用できます)")
+async def word_add(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
     role = discord.utils.get(guild.roles, name=role_name)
@@ -135,8 +135,8 @@ async def add(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="remove", description=f"禁止単語を削除します({role_name}だけが使用できます)")
-async def remove(interaction: discord.Interaction, word: str):
+@bot.tree.command(name="word_remove", description=f"禁止単語を削除します({role_name}だけが使用できます)")
+async def word_remove(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
     role = discord.utils.get(guild.roles, name=role_name)
@@ -149,16 +149,16 @@ async def remove(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="list", description="禁止単語一覧を表示します")
-async def list_words(interaction: discord.Interaction):
+@bot.tree.command(name="word_list", description="禁止単語一覧を表示します")
+async def word_list(interaction: discord.Interaction):
     if respond_words:
         words_str = "\n".join(respond_words)
         await interaction.response.send_message(f'現在の禁止単語リスト:\n{words_str}')
     else:
         await interaction.response.send_message('現在、禁止単語は登録されていません。')
 
-@bot.tree.command(name="hideout", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
-async def hideout(interaction: discord.Interaction, user: discord.Member):
+@bot.tree.command(name="word_specific_hide", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
+async def word_specific_hide(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
     if user.id in user_word_counts:
@@ -168,8 +168,8 @@ async def hideout(interaction: discord.Interaction, user: discord.Member):
             await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。', ephemeral=True)
 
 
-@bot.tree.command(name="openout", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
-async def openout(interaction: discord.Interaction, user: discord.Member):
+@bot.tree.command(name="word_everyone_open", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
+async def word_everyone_open(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
     if user.id in user_word_counts:
@@ -177,8 +177,8 @@ async def openout(interaction: discord.Interaction, user: discord.Member):
             await interaction.response.send_message(f'{user.name} は {count} 回 不適切な単語を使用しています。')
     else:
             await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。')
-@bot.tree.command(name="openall", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
-async def openall(interaction: discord.Interaction):
+@bot.tree.command(name="word_specific_all", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
+async def word_specific_all(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
     sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
@@ -188,8 +188,8 @@ async def openall(interaction: discord.Interaction):
     else:
             await interaction.response.send_message("まだ不適切な単語の使用はありません。")
 
-@bot.tree.command(name="hideall", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
-async def hideall(interaction: discord.Interaction):
+@bot.tree.command(name="word_hide_everyone", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
+async def word_hide_everyone(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
     sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
