@@ -69,7 +69,7 @@ async def addreply(interaction: discord.Interaction, trigger: str, response: str
         await interaction.response.send_message(f'追加されました: {trigger} -> {response}')
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
-        
+
 # /removereply コマンドの処理
 @bot.tree.command(name="removereply", description="カスタム返信を削除します")
 async def removereply(interaction: discord.Interaction, trigger: str):
@@ -331,10 +331,13 @@ async def handle_bump_notification(message):
     await message.channel.send(embed=notice_embed)
 
 async def send_update_message():
+    update_id = 1236087834352291863
     user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
     user = await bot.fetch_user(user_id)
+    update = await bot.fetch_channel(update_id)
     await user.send("アップデートしました!!")
-
+    await update.send("アップデートしました!!")
+    
 # Discordボットの起動とHTTPサーバーの起動
 try:
     keep_alive()
