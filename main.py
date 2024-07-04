@@ -30,7 +30,7 @@ intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
 
-respond_words = []
+respond_words = ["死ね","殺す","@youchan0803","fack"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
 
@@ -80,7 +80,7 @@ async def check_members():
                     else:
                         print(f"An error occurred: {e}")
 
-@bot.tree.command(name="add", description="Add a word to the respond list (role only)")
+@bot.tree.command(name="add", description=f"禁止単語を追加します({role_name}だけが使用できます)")
 async def add(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -94,7 +94,7 @@ async def add(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="remove", description="Remove a word from the respond list (role only)")
+@bot.tree.command(name="remove", description=f"禁止単語を削除します({role_name}だけが使用できます)")
 async def remove(interaction: discord.Interaction, word: str):
     member = interaction.user
     guild = interaction.guild
@@ -108,7 +108,7 @@ async def remove(interaction: discord.Interaction, word: str):
     else:
         await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
 
-@bot.tree.command(name="list", description="Show the list of respond words")
+@bot.tree.command(name="list", description="禁止単語一覧を表示します")
 async def list_words(interaction: discord.Interaction):
     if respond_words:
         words_str = "\n".join(respond_words)
@@ -116,63 +116,47 @@ async def list_words(interaction: discord.Interaction):
     else:
         await interaction.response.send_message('現在、禁止単語は登録されていません。')
 
-@bot.tree.command(name="hideout", description="Show the count of inappropriate words used by a user (role only) - Hidden from others")
+@bot.tree.command(name="hideout", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
 async def hideout(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role and role in member.roles:
-        if user.id in user_word_counts:
+    if user.id in user_word_counts:
             count = user_word_counts[user.id]
             await interaction.response.send_message(f'あなたは、{user.name} が {count} 回 不適切な単語を使用していることを確認しました。', ephemeral=True)
-        else:
-            await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。', ephemeral=True)
     else:
-        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+            await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。', ephemeral=True)
 
-@bot.tree.command(name="openout", description="Show the count of inappropriate words used by a user (role only) - Visible to everyone")
+
+@bot.tree.command(name="openout", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
 async def openout(interaction: discord.Interaction, user: discord.Member):
     member = interaction.user
     guild = interaction.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role and role in member.roles:
-        if user.id in user_word_counts:
+    if user.id in user_word_counts:
             count = user_word_counts[user.id]
             await interaction.response.send_message(f'{user.name} は {count} 回 不適切な単語を使用しています。')
-        else:
-            await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。')
     else:
-        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
-
-@bot.tree.command(name="openall", description="Show the count of inappropriate words used by all users (role only) - Visible to everyone")
+            await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。')
+@bot.tree.command(name="openall", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
 async def openall(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role and role in member.roles:
-        sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
-        if sorted_counts:
+    sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
+    if sorted_counts:
             result = "\n".join(f"{guild.get_member(item[0]).name}: {item[1]} 回" for item in sorted_counts)
             await interaction.response.send_message(f"不適切な単語の使用回数 (多い順):\n{result}")
-        else:
-            await interaction.response.send_message("まだ不適切な単語の使用はありません。")
     else:
-        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+            await interaction.response.send_message("まだ不適切な単語の使用はありません。")
 
-@bot.tree.command(name="hideall", description="Show the count of inappropriate words used by all users (role only) - Hidden from others")
+@bot.tree.command(name="hideall", description=f"特定のユーザーの不適切な言葉をいった回数をあなたにだけ表示させます")
 async def hideall(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role and role in member.roles:
-        sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
-        if sorted_counts:
+    sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
+    if sorted_counts:
             result = "\n".join(f"{guild.get_member(item[0]).name}: {item[1]} 回" for item in sorted_counts)
             await interaction.response.send_message(f"不適切な単語の使用回数 (多い順):\n{result}", ephemeral=True)
-        else:
-            await interaction.response.send_message("まだ不適切な単語の使用はありません。", ephemeral=True)
     else:
-        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+            await interaction.response.send_message("まだ不適切な単語の使用はありません。", ephemeral=True)
 
 @bot.event
 async def on_message(message):
@@ -182,7 +166,7 @@ async def on_message(message):
     # word_message の処理
     for word in respond_words:
         if word in message.content:
-            await message.reply(f'({word})という言葉は不適切です。禁止単語リストに含まれています')
+            await message.reply(f'その({word})という言葉は不適切です。禁止単語リストに含まれています')
             if message.author.id in user_word_counts:
                 user_word_counts[message.author.id] += 1
             else:
