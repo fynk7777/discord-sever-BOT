@@ -30,6 +30,9 @@ intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
 
+#カスタム返信のリストを初期化
+custom_replies = {}
+
 respond_words = ["死ね","殺す","@youchan0803","fack"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
@@ -54,6 +57,44 @@ async def on_ready():
     check_members.start()  # この行を追加
     # bakabonnpapa に DM を送信
     await send_update_message()
+
+# /addreply コマンドの処理
+@bot.tree.command(name="addreply", description="カスタム返信を追加します")
+async def addreply(interaction: discord.Interaction, trigger: str, response: str):
+    custom_replies[trigger] = response
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        await interaction.response.send_message(f'追加されました: {trigger} -> {response}')
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+        
+# /removereply コマンドの処理
+@bot.tree.command(name="removereply", description="カスタム返信を削除します")
+async def removereply(interaction: discord.Interaction, trigger: str):
+    member = interaction.user
+    guild = interaction.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role and role in member.roles:
+        if trigger in custom_replies:
+            del custom_replies[trigger]
+            await interaction.response.send_message(f'削除されました: {trigger}')
+        else:
+            await interaction.response.send_message(f'見つかりません: {trigger}')
+    else:
+        await interaction.response.send_message(f'このコマンドは役職「{role_name}」を持っているメンバーのみが使用できます。')
+
+# /listreply コマンドの処理
+@bot.tree.command(name="listreply", description="カスタム返信リストを表示します")
+async def listreply(interaction: discord.Interaction):
+    if custom_replies:
+        reply_list = '\n'.join([f'{trigger} -> {response}' for trigger, response in custom_replies.items()])
+        await interaction.response.send_message(f'カスタム返信リスト:\n{reply_list}')
+    else:
+        await interaction.response.send_message('カスタム返信はありません。')
+
+
 
 @tasks.loop(seconds=1)  # 1秒ごとにチェック
 async def check_members():
@@ -192,6 +233,10 @@ async def on_message(message):
         if embeds is not None and len(embeds) != 0:
             if "表示順をアップしたよ" in (embeds[0].description or ""):
                 await handle_bump_notification(message)
+
+    response = custom_replies.get(message.content)
+    if response:
+        await message.channel.send(response)
 
     await bot.process_commands(message)
 
