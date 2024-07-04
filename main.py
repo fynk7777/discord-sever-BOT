@@ -182,7 +182,7 @@ async def on_message(message):
     # word_message の処理
     for word in respond_words:
         if word in message.content:
-            await message.reply(f'その({word})という言葉は不適切です。禁止単語リストに含まれています')
+            await message.reply(f'({word})という言葉は不適切です。禁止単語リストに含まれています')
             if message.author.id in user_word_counts:
                 user_word_counts[message.author.id] += 1
             else:
