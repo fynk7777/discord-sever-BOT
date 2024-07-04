@@ -4,7 +4,7 @@ import aiohttp
 import asyncio
 import random
 import io
-from discord.ext import commands, tasks
+from discord.ext import commands,tasks
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
 
@@ -39,7 +39,7 @@ user_word_counts = {}
 
 # BOTロールと参加者ロールの名前を定義
 BOT_ROLE_NAME = "BOT"
-PARTICIPANT_ROLE_NAME = "ハゲ"
+PARTICIPANT_ROLE_NAME = "ハゲ(参加者)"
 
 # 起動時に動作する処理
 @bot.event
@@ -52,31 +52,32 @@ async def on_ready():
         print(f'Error syncing commands: {e}')
     # ボットが準備完了したらタスクを開始
     check_members.start()  # この行を追加
+    # bakabonnpapa に DM を送信
+    await send_update_message()
 
-@tasks.loop(seconds=10)  # 10秒ごとにチェック
+@tasks.loop(seconds=1)  # 1秒ごとにチェック
 async def check_members():
     for guild in bot.guilds:
         bot_role = discord.utils.get(guild.roles, name=BOT_ROLE_NAME)
         participant_role = discord.utils.get(guild.roles, name=PARTICIPANT_ROLE_NAME)
         if bot_role and participant_role:
             for member in guild.members:
-                if bot_role in member.roles and participant_role in member.roles:
-                    # BOTロールがついている人から参加者ロールを削除
-                    try:
+                try:
+                    if bot_role in member.roles and participant_role in member.roles:
+                        # BOTロールがついている人から参加者ロールを削除
                         await member.remove_roles(participant_role)
                         print(f"Removed {PARTICIPANT_ROLE_NAME} role from {member.name}")
-                    except discord.errors.Forbidden:
-                        print(f"Failed to remove role from {member.name}: Missing Permissions")
-                    except Exception as e:
-                        print(f"An error occurred: {e}")
-                elif bot_role not in member.roles and participant_role not in member.roles:
-                    # BOTロールがついていない人に参加者ロールを追加
-                    try:
+                    elif bot_role not in member.roles and participant_role not in member.roles:
+                        # BOTロールがついていない人に参加者ロールを追加
                         await member.add_roles(participant_role)
                         print(f"Added {PARTICIPANT_ROLE_NAME} role to {member.name}")
-                    except discord.errors.Forbidden:
-                        print(f"Failed to add role to {member.name}: Missing Permissions")
-                    except Exception as e:
+                except discord.errors.Forbidden:
+                    print(f"Failed to modify role for {member.name}: Missing Permissions")
+                except discord.HTTPException as e:
+                    if e.status == 429:
+                        print(f"Too Many Requests: {e}")
+                        await asyncio.sleep(5)  # 5秒待機
+                    else:
                         print(f"An error occurred: {e}")
 
 @bot.tree.command(name="add", description="Add a word to the respond list (role only)")
@@ -299,6 +300,11 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
+
+async def send_update_message():
+    user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
+    user = await bot.fetch_user(user_id)
+    await user.send("アップデートしました!!")
 
 # Discordボットの起動とHTTPサーバーの起動
 try:
