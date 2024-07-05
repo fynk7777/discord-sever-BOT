@@ -7,6 +7,7 @@ import io
 from discord.ext import commands,tasks
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
+from discord import app_commands
 
 # Discord Botのトークン
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -29,6 +30,9 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 client = discord.Client(intents=intents)
+
+# グローバル変数でソースチャンネルとデスティネーションチャンネルのペアを管理
+channel_pairs = {}
 
 #カスタム返信のリストを初期化
 custom_replies = {}
@@ -57,6 +61,19 @@ async def on_ready():
     check_members.start()  # この行を追加
     # bakabonnpapa に DM を送信
     await send_update_message()
+
+# スラッシュコマンドの定義
+@bot.tree.command(name="transfer", description="Set destination channel to transfer messages to")
+@app_commands.describe(destination_channel="Destination channel ID")
+async def transfer(interaction: discord.Interaction, destination_channel: str):
+    global channel_pairs
+    try:
+        destination_channel_id = int(destination_channel)
+        source_channel_id = interaction.channel_id  # コマンドが使われたチャンネルをソースチャンネルに設定
+        channel_pairs[source_channel_id] = destination_channel_id
+        await interaction.response.send_message(f"Messages from this channel will be transferred to <#{destination_channel_id}>")
+    except ValueError:
+        await interaction.response.send_message("Invalid channel ID. Please enter a valid integer.", ephemeral=True)
 
 # /addreply コマンドの処理
 @bot.tree.command(name="reply_add", description="カスタム返信を追加します")
@@ -201,8 +218,16 @@ async def word_everyone_hide(interaction: discord.Interaction):
 
 @bot.event
 async def on_message(message):
+    global channel_pairs, user_word_counts, respond_words
     if message.author == bot.user:
         return
+
+    # メッセージ転送の処理
+    if message.channel.id in channel_pairs and not message.author.bot:
+        destination_channel_id = channel_pairs[message.channel.id]
+        destination_channel = bot.get_channel(destination_channel_id)
+        if destination_channel:
+            await destination_channel.send(message.content)
 
     # word_message の処理
     for word in respond_words:
@@ -332,7 +357,7 @@ async def handle_bump_notification(message):
     await message.channel.send(embed=notice_embed)
 
 async def send_update_message():
-    update_id = 1236087834352291863
+    update_id = 1258593677748736120
     user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
     user = await bot.fetch_user(user_id)
     update = await bot.fetch_channel(update_id)
