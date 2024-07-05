@@ -48,6 +48,8 @@ user_word_counts = {}
 BOT_ROLE_NAME = "BOT"
 PARTICIPANT_ROLE_NAME = "参加者"
 
+ALLOWED_USERS = [ 1212687868603007067 ]  # ユーザーIDを追加
+
 # 起動時に動作する処理
 @bot.event
 async def on_ready():
@@ -66,14 +68,17 @@ async def on_ready():
 @bot.tree.command(name="transfer", description="Set destination channel to transfer messages to")
 @app_commands.describe(destination_channel="Destination channel ID")
 async def transfer(interaction: discord.Interaction, destination_channel: str):
-    global channel_pairs
-    try:
-        destination_channel_id = int(destination_channel)
-        source_channel_id = interaction.channel_id  # コマンドが使われたチャンネルをソースチャンネルに設定
-        channel_pairs[source_channel_id] = destination_channel_id
-        await interaction.response.send_message(f"Messages from this channel will be transferred to <#{destination_channel_id}>")
-    except ValueError:
-        await interaction.response.send_message("Invalid channel ID. Please enter a valid integer.", ephemeral=True)
+    if interaction.user.id in ALLOWED_USERS:
+        global channel_pairs
+        try:
+            destination_channel_id = int(destination_channel)
+            source_channel_id = interaction.channel_id  # コマンドが使われたチャンネルをソースチャンネルに設定
+            channel_pairs[source_channel_id] = destination_channel_id
+            await interaction.response.send_message(f"Messages from this channel will be transferred to <#{destination_channel_id}>")
+        except ValueError:
+            await interaction.response.send_message("Invalid channel ID. Please enter a valid integer.", ephemeral=True)
+    else:
+        await interaction.response.send_message('このコマンドを実行する権限がありません。', ephemeral=True)
 
 # /addreply コマンドの処理
 @bot.tree.command(name="reply_add", description="カスタム返信を追加します")
