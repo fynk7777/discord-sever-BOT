@@ -38,7 +38,7 @@ channel_pairs = {}
 #カスタム返信のリストを初期化
 custom_replies = {}
 
-respond_words = ["死ね","殺す","<@1237354152342978600>","fack"]
+respond_words = ["死ね","殺す","fack","虐待"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
 
