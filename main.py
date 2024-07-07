@@ -418,6 +418,15 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
+
+async def send_update_message():
+    update_id = 1258593677748736120
+    user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
+    user = await bot.fetch_user(user_id)
+    update = await bot.fetch_channel(update_id)
+    await user.send("アップデートしました!!")
+    await update.send("アップデートしました!!")
+
 # Discordボットの起動とHTTPサーバーの起動
 try:
     keep_alive()
