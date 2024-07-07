@@ -33,7 +33,7 @@ channel_pairs = {}
 #カスタム返信のリストを初期化
 custom_replies = {}
 
-respond_words = []
+respond_words = ["死ね","殺す","fack","虐待"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
 
@@ -258,7 +258,7 @@ async def on_message(message):
 
                         # 埋め込みメッセージを作成
                     embed = discord.Embed(
-                        description=f"{target_message.content}\nFrom {channel.name} {target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
+                        description=f"{target_message.content}\nFrom #{channel.name} {target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
                         color=discord.Color.blue()
                         )
                     author_avatar_url = target_message.author.avatar.url if target_message.author.avatar else target_message.author.default_avatar.url
