@@ -2,8 +2,6 @@ import discord
 import os
 import aiohttp
 import asyncio
-import random
-import io
 import re
 from discord.ext import commands,tasks
 from datetime import datetime, timedelta
@@ -13,9 +11,6 @@ from discord import app_commands
 # Discord Botのトークン
 TOKEN = os.getenv("DISCORD_TOKEN")
 COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
-
-# 画像を送信するチャンネルのID
-TARGET_CHANNEL_ID = 1257585023125684256  # 画像を格納しているチャンネルのIDを設定する
 
 # Intentsの設定
 intents = discord.Intents.default()
@@ -38,7 +33,7 @@ channel_pairs = {}
 #カスタム返信のリストを初期化
 custom_replies = {}
 
-respond_words = ["死ね","殺す","fack","虐待"]
+respond_words = []
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
 
@@ -50,6 +45,7 @@ BOT_ROLE_NAME = "BOT"
 PARTICIPANT_ROLE_NAME = "参加者"
 
 ALLOWED_USERS = [ 1212687868603007067 ]  # ユーザーIDを追加
+
 
 # 起動時に動作する処理
 @bot.event
@@ -200,8 +196,8 @@ async def word_everyone_open(interaction: discord.Interaction, user: discord.Mem
             await interaction.response.send_message(f'{user.name} は {count} 回 不適切な単語を使用しています。')
     else:
             await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。')
-@bot.tree.command(name="word_specific_open", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
-async def word_specific_open(interaction: discord.Interaction):
+@bot.tree.command(name="word_specific_all", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
+async def word_specific_all(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
     sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
@@ -257,25 +253,26 @@ async def on_message(message):
             if channel:
                 try:
                     target_message = await channel.fetch_message(message_id)
-
-                    # メッセージリンクのURLを作成
+                        # メッセージリンクのURLを作成
                     message_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
 
-                    # 埋め込みメッセージを作成
+                        # 埋め込みメッセージを作成
                     embed = discord.Embed(
                         description=f"{target_message.content}\nFrom {channel.name} {target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
                         color=discord.Color.blue()
-                    )
-                    embed.set_author(name=target_message.author.display_name, icon_url=target_message.author.avatar.url)
+                        )
+                    author_avatar_url = target_message.author.avatar.url if target_message.author.avatar else target_message.author.default_avatar.url
+                    embed.set_author(name=target_message.author.display_name, icon_url=author_avatar_url)
 
                     # 画像添付ファイルを追加
                     for attachment in target_message.attachments:
-                        if attachment.url.lower().endswith(('png', 'jpg', 'jpeg', 'gif')):
-                            embed.set_image(url=attachment.url)
+                        embed.set_image(url=attachment.url)
 
                     # メッセージリンクを追加
-                    embed.add_field(name="メッセージ先はこちら", value=f"[リンクを開く]({message_link})", inline=False)
-
+                    button = discord.ui.Button(label="メッセージ先はこちら", url=message_link)
+                    view = discord.ui.View()
+                    view.add_item(button)
+                    
                     await message.channel.send(embed=embed)
 
                 except discord.NotFound:
