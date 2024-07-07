@@ -272,8 +272,8 @@ async def on_message(message):
                     button = discord.ui.Button(label="メッセージ先はこちら", url=message_link)
                     view = discord.ui.View()
                     view.add_item(button)
-                    
-                    await message.channel.send(embed=embed)
+
+                    await message.channel.send(embed=embed, view=view)
 
                 except discord.NotFound:
                     await message.channel.send('メッセージが見つかりませんでした。')
