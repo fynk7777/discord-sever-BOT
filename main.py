@@ -4,6 +4,7 @@ import aiohttp
 import asyncio
 import random
 import io
+import re
 from discord.ext import commands,tasks
 from datetime import datetime, timedelta
 from keep_alive import keep_alive
@@ -199,8 +200,8 @@ async def word_everyone_open(interaction: discord.Interaction, user: discord.Mem
             await interaction.response.send_message(f'{user.name} は {count} 回 不適切な単語を使用しています。')
     else:
             await interaction.response.send_message(f'{user.name} は、不適切な単語を使用していません。')
-@bot.tree.command(name="word_specific_all", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
-async def word_specific_all(interaction: discord.Interaction):
+@bot.tree.command(name="word_specific_open", description=f"特定のユーザーの不適切な言葉をいった回数を全員に表示させます")
+async def word_specific_open(interaction: discord.Interaction):
     member = interaction.user
     guild = interaction.guild
     sorted_counts = sorted(user_word_counts.items(), key=lambda item: item[1], reverse=True)
@@ -221,11 +222,68 @@ async def word_everyone_hide(interaction: discord.Interaction):
     else:
             await interaction.response.send_message("まだ不適切な単語の使用はありません。", ephemeral=True)
 
+@bot.tree.command(name="word_set_count", description=f"特定のユーザーの不適切な言葉の使用回数を設定します")
+async def word_set_count(interaction: discord.Interaction, user: discord.Member, count: int):
+    if interaction.user.id != 1212687868603007067:
+        await interaction.response.send_message('このコマンドを実行する権限がありません。', ephemeral=True)
+        return
+
+    # 指定したユーザーの不適切な単語使用回数を設定
+    if count >= 0:
+        user_word_counts[user.id] = count
+
+    # レスポンスの送信
+    await interaction.response.send_message(f'{user.name} の不適切な単語使用回数を {count} に設定しました。', ephemeral=True)
+
 @bot.event
 async def on_message(message):
     global channel_pairs, user_word_counts, respond_words
     if message.author == bot.user:
         return
+
+    # メッセージ内のリンクを検出
+    message_link_pattern = re.compile(r'https://discord.com/channels/(\d+)/(\d+)/(\d+)')
+    match = message_link_pattern.search(message.content)
+
+    if match:
+        guild_id = int(match.group(1))
+        channel_id = int(match.group(2))
+        message_id = int(match.group(3))
+
+        # メッセージを取得
+        guild = bot.get_guild(guild_id)
+        if guild:
+            channel = guild.get_channel(channel_id)
+            if channel:
+                try:
+                    target_message = await channel.fetch_message(message_id)
+
+                    # メッセージリンクのURLを作成
+                    message_link = f"https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
+
+                    # 埋め込みメッセージを作成
+                    embed = discord.Embed(
+                        description=f"{target_message.content}\nFrom {channel.name} {target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
+                        color=discord.Color.blue()
+                    )
+                    embed.set_author(name=target_message.author.display_name, icon_url=target_message.author.avatar.url)
+
+                    # 画像添付ファイルを追加
+                    for attachment in target_message.attachments:
+                        if attachment.url.lower().endswith(('png', 'jpg', 'jpeg', 'gif')):
+                            embed.set_image(url=attachment.url)
+
+                    # メッセージリンクを追加
+                    embed.add_field(name="メッセージ先はこちら", value=f"[リンクを開く]({message_link})", inline=False)
+
+                    await message.channel.send(embed=embed)
+
+                except discord.NotFound:
+                    await message.channel.send('メッセージが見つかりませんでした。')
+                except discord.Forbidden:
+                    await message.channel.send('メッセージを表示する権限がありません。')
+                except discord.HTTPException as e:
+                    await message.channel.send(f'メッセージの取得に失敗しました: {e}')
 
     # メッセージ転送の処理
     if message.channel.id in channel_pairs and not message.author.bot:
@@ -234,7 +292,7 @@ async def on_message(message):
         if destination_channel:
             await destination_channel.send(message.content)
 
-    # word_message の処理
+    # 不適切な言葉の処理
     for word in respond_words:
         if word in message.content:
             await message.reply(f'その({word})という言葉は不適切です。禁止単語リストに含まれています')
@@ -264,7 +322,7 @@ async def on_message(message):
             if "表示順をアップしたよ" in (embeds[0].description or ""):
                 await handle_bump_notification(message)
 
-    #自動返信
+    # 自動返信
     response = custom_replies.get(message.content)
     if response:
         await message.reply(response)
@@ -360,15 +418,6 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
-
-async def send_update_message():
-    update_id = 1258593677748736120
-    user_id = 1212687868603007067  # bakabonnpapa のユーザーID を設定する
-    user = await bot.fetch_user(user_id)
-    update = await bot.fetch_channel(update_id)
-    await user.send("アップデートしました!!")
-    await update.send("アップデートしました!!")
-
 # Discordボットの起動とHTTPサーバーの起動
 try:
     keep_alive()
