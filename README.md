@@ -1,5 +1,5 @@
-**[ハゲたちが教えるマリカ塾](https://discord.gg/ZtpA8HDwtS)**  
-# discordサーバーです
+# [ハゲたちが教えるマリカ塾](https://discord.gg/ZtpA8HDwtS)  
+**discordサーバーですよ**
 このサーバーでは、主に雑談をやっています。一応マリオカートサーバーなので、マリオカートが上手い人が多いです。  
 いつもみんなで楽しくやっています。雑談だけでも来てみてください。  
 <https://discord.gg/ZtpA8HDwtS>
