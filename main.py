@@ -267,7 +267,7 @@ async def on_message(message):
 
                         # 埋め込みメッセージを作成
                     embed = discord.Embed(
-                        description=f"{target_message.content}\nFrom　#{channel.name}　　{target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
+                        description=f"{target_message.content}\nFrom\n#{channel.name}\n{target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
                         color=discord.Color.blue()
                         )
                     author_avatar_url = target_message.author.avatar.url if target_message.author.avatar else target_message.author.default_avatar.url
