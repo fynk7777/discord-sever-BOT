@@ -261,11 +261,11 @@ async def on_message(message):
 
                         # 埋め込みメッセージを作成
                     embed = discord.Embed(
-                        description=f"{target_message.content}\nFrom\n{channel.mention}",
+                        description=f"{target_message.content}\nFrom {channel.mention}",
                         color=discord.Color.blue(),
                         timestamp=target_message.created_at
                         )
-                    author_avatar_url = target_message.author.avatar.url if target_message.author.avatar else target_message.author.default_avatar.url
+                    author_avatar_url = target_message.author.display_avatar.url
                     embed.set_author(name=target_message.author.display_name, icon_url=author_avatar_url)
 
                     # 画像添付ファイルを追加
