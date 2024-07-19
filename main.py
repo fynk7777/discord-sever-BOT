@@ -1,31 +1,25 @@
-import discord
 import os
 import aiohttp
 import asyncio
 import re
-from discord.ext import commands,tasks
 from datetime import datetime, timedelta
-from keep_alive import keep_alive
+
+import discord
 from discord import app_commands
+from discord.ext import commands, tasks
+
+from keep_alive import keep_alive
+
 
 # Discord Botのトークン
 TOKEN = os.getenv("DISCORD_TOKEN")
 COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
 
 # Intentsの設定
-intents = discord.Intents.default()
-intents.dm_messages = True  # DMメッセージを受信するための設定
-intents.messages = True      # サーバーでのメッセージを受信するための設定
-intents.message_content = True
-intents.members = True
+intents = discord.Intents.all()
 
 # Botクライアントの初期化
-bot = commands.Bot(command_prefix='/', intents=intents)
 bot = commands.Bot(command_prefix='!', intents=intents)
-intents = discord.Intents.default()
-intents.message_content = True
-intents.members = True
-client = discord.Client(intents=intents)
 
 # グローバル変数でソースチャンネルとデスティネーションチャンネルのペアを管理
 channel_pairs = {}
@@ -267,8 +261,9 @@ async def on_message(message):
 
                         # 埋め込みメッセージを作成
                     embed = discord.Embed(
-                        description=f"{target_message.content}\nFrom\n#{channel.name}\n{target_message.created_at.strftime('%Y/%m/%d %H:%M')}",
-                        color=discord.Color.blue()
+                        description=f"{target_message.content}\nFrom\n{channel.mention}",
+                        color=discord.Color.blue(),
+                        timestamp=target_message.created_at
                         )
                     author_avatar_url = target_message.author.avatar.url if target_message.author.avatar else target_message.author.default_avatar.url
                     embed.set_author(name=target_message.author.display_name, icon_url=author_avatar_url)
