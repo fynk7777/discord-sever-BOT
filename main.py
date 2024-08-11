@@ -130,7 +130,7 @@ async def check_members():
                 except discord.HTTPException as e:
                     if e.status == 429:
                         print(f"Too Many Requests: {e}")
-                        await asyncio.sleep(5)  # 5秒待機
+                        await asyncio.sleep(1)  # 5秒待機
                     else:
                         print(f"An error occurred: {e}")
 
