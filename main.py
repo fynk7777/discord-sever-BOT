@@ -316,13 +316,6 @@ async def on_message(message):
     if message.content == 'ハゲ':
         await send_random_image(message.channel)
 
-    # BUMP通知機能
-    if message.author.id == 302050872383242240:
-        embeds = message.embeds
-        if embeds is not None and len(embeds) != 0:
-            if "表示順をアップしたよ" in (embeds[0].description or ""):
-                await handle_bump_notification(message)
-
     # 自動返信
     response = custom_replies.get(message.content)
     if response:
@@ -402,7 +395,20 @@ async def send_to_cohere(input_text):
             print(f'エラーが発生しました: {e}')
             return '申し訳ありませんが、現在リクエストを処理できませんでした。'
 
-async def handle_bump_notification(message):
+# メッセージコンテキストメニューを追加
+@bot.tree.context_menu(name="最新のBUMP")
+async def latest_bump_context(interaction: discord.Interaction, message: discord.Message):
+    global latest_bump_time
+
+    # BUMPメッセージかどうかを確認
+    if message.author.id == 302050872383242240:
+        embeds = message.embeds
+        if embeds is not None and len(embeds) != 0:
+            if "表示順をアップしたよ" in (embeds[0].description or ""):
+                latest_bump_time = datetime.now()  # 最新のBUMPの時刻を記録
+                await handle_bump_notification(message, interaction)
+
+async def handle_bump_notification(message, interaction=None):
     master = datetime.now() + timedelta(hours=2)
     notice_embed = discord.Embed(
         title="BUMPを検知しました",
@@ -410,6 +416,8 @@ async def handle_bump_notification(message):
         color=0x00BFFF,
         timestamp=datetime.now()
     )
+    if interaction:
+        await interaction.response.send_message(embed=notice_embed, ephemeral=True)  # ユーザーに一時的にメッセージを送信
     await message.channel.send(embed=notice_embed)
     await asyncio.sleep(7200)
     notice_embed = discord.Embed(
