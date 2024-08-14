@@ -54,7 +54,6 @@ async def on_ready():
     check_members.start()  # この行を追加
     # bakabonnpapa に DM を送信
     await send_update_message()
-    await bot.change_presence(activity=discord.Game(name="このサーバー専用BOTです"))
 
 # スラッシュコマンドの定義
 @bot.tree.command(name="transfer", description="Set destination channel to transfer messages to")
@@ -69,6 +68,15 @@ async def transfer(interaction: discord.Interaction, destination_channel: str):
             await interaction.response.send_message(f"Messages from this channel will be transferred to <#{destination_channel_id}>")
         except ValueError:
             await interaction.response.send_message("Invalid channel ID. Please enter a valid integer.", ephemeral=True)
+    else:
+        await interaction.response.send_message('このコマンドを実行する権限がありません。', ephemeral=True)
+
+@bot.tree.command(name="status",description="ステータスを設定するコマンドです")
+@app_commands.describe(text="ステータスを設定します")
+async def text(interaction: discord.Interaction, text: str):
+    if interaction.user.id in ALLOWED_USERS:
+        await bot.change_presence(status=discord.Status.online, activity=discord.CustomActivity(name=f'{text}'))
+        await interaction.response.send_message(f'ステータスを「{text}」に設定しました。',ephemeral=True)
     else:
         await interaction.response.send_message('このコマンドを実行する権限がありません。', ephemeral=True)
 
