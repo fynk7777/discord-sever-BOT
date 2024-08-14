@@ -54,6 +54,7 @@ async def on_ready():
     check_members.start()  # この行を追加
     # bakabonnpapa に DM を送信
     await send_update_message()
+    await bot.change_presence(activity=discord.Game(name="このサーバー専用BOTです"))
 
 # スラッシュコマンドの定義
 @bot.tree.command(name="transfer", description="Set destination channel to transfer messages to")
