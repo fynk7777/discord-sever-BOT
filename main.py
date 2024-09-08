@@ -40,6 +40,9 @@ PARTICIPANT_ROLE_NAME = "参加者"
 
 ALLOWED_USERS = []  # ユーザーIDを追加
 
+BOT_ID = 1256561371127091230
+
+
 
 # 起動時に動作する処理
 @bot.event
@@ -251,7 +254,8 @@ async def on_member_update(before, after):
 
         # 最新の監査ログを取得 (アクションが「ニックネーム変更」であるもの)
         async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update):
-            if entry.target.id == after.id and entry.user.id != after.id:
+            # 変更された対象が本人でなく、ボットでもないかを確認
+            if entry.target.id == after.id and entry.user.id != after.id and entry.user.id != BOT_ID:
                 # 許可されたユーザーか確認
                 if entry.user.id not in ALLOWED_USERS:
                     # 元のニックネームを取得
@@ -266,7 +270,6 @@ async def on_member_update(before, after):
                         print(f'{after.name} のニックネームを戻す権限がありません')
                     except discord.HTTPException as e:
                         print(f'ニックネームを戻す際にエラーが発生しました: {e}')
-
 
 @bot.event
 async def on_message(message):
