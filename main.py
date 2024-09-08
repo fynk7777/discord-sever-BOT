@@ -245,30 +245,32 @@ async def word_set_count(interaction: discord.Interaction, user: discord.Member,
 
 @bot.event
 async def on_member_update(before, after):
-    # ニックネームが変更されたかどうか確認
+    # ニックネームが変更されたかどうかを確認
     if before.nick != after.nick:
-        # ニックネームを変更したのが許可されたユーザーでないか確認
-        if after.id not in ALLOWED_USERS:
-            # ユーザーがすでにニックネームを持っている場合、その元のニックネームを保存
-            if before.nick is not None:
-                original_nicknames[before.id] = before.nick
-            else:
-                original_nicknames[before.id] = before.name  # ニックネームがない場合はデフォルトの名前を保存
+        # ニックネームを変更したのが許可されたユーザーか、自分自身か確認
+        if after.id in ALLOWED_USERS or before.id == after.id:
+            # 許可されたユーザーや自分自身ならニックネームを変更させる
+            return
+        
+        # 元のニックネームを保存
+        original_nickname = before.nick if before.nick else before.name
+        
+        # ニックネームが変更された時点のニックネームを保存
+        original_nicknames[before.id] = original_nickname
 
-            # 元のニックネームに戻す
-            try:
-                # 再度ニックネームを変更した際に再トリガーしないように一時的にイベントを無視
-                bot.remove_listener(on_member_update)
-                await after.edit(nick=original_nicknames[before.id])
-                print(f'{after.name} のニックネームを {original_nicknames[before.id]} に戻しました')
-            except discord.Forbidden:
-                print(f'{after.name} のニックネームを戻す権限がありません')
-            except discord.HTTPException as e:
-                print(f'ニックネームを戻す際にエラーが発生しました: {e}')
-            finally:
-                # イベントリスナーを再度追加
-                bot.add_listener(on_member_update)
-
+        # ニックネームを元に戻す
+        try:
+            # 再度ニックネーム変更を検知しないようにイベントを一時的に無効化
+            bot.remove_listener(on_member_update)
+            await after.edit(nick=original_nicknames[before.id])
+            print(f'{after.name} のニックネームを {original_nicknames[before.id]} に戻しました')
+        except discord.Forbidden:
+            print(f'{after.name} のニックネームを戻す権限がありません')
+        except discord.HTTPException as e:
+            print(f'ニックネームを戻す際にエラーが発生しました: {e}')
+        finally:
+            # イベントリスナーを再度有効化
+            bot.add_listener(on_member_update)
 
 @bot.event
 async def on_message(message):
