@@ -30,7 +30,7 @@ custom_replies = {}
 respond_words = ["死ね","殺す","虐待"]
 # 応答ワードのリストを読み込む
 role_name = "Lounge staff"
-
+original_nicknames = {}
 # ユーザーごとの不適切な単語使用回数を記録する辞書
 user_word_counts = {}
 
