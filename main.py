@@ -42,6 +42,9 @@ ALLOWED_USERS = []  # ユーザーIDを追加
 
 BOT_ID = 1256561371127091230
 
+nick_edit_in_progress = set()
+
+
 
 
 # 起動時に動作する処理
@@ -248,9 +251,15 @@ async def word_set_count(interaction: discord.Interaction, user: discord.Member,
 
 @bot.event
 async def on_member_update(before, after):
+    global nick_edit_in_progress
+
     # ニックネームが変更されたかを確認
     if before.nick != after.nick:
         guild = after.guild
+
+        # BOTが変更をしている場合は無視
+        if after.id in nick_edit_in_progress:
+            return
 
         # 最新の監査ログを取得 (アクションが「ニックネーム変更」であるもの)
         async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.member_update):
@@ -261,6 +270,9 @@ async def on_member_update(before, after):
                     # 元のニックネームを取得
                     original_nickname = before.nick if before.nick else before.name
                     original_nicknames[before.id] = original_nickname
+
+                    # ニックネーム変更中のユーザーを記録
+                    nick_edit_in_progress.add(after.id)
                     
                     # 元のニックネームに戻す
                     try:
@@ -270,6 +282,10 @@ async def on_member_update(before, after):
                         print(f'{after.name} のニックネームを戻す権限がありません')
                     except discord.HTTPException as e:
                         print(f'ニックネームを戻す際にエラーが発生しました: {e}')
+                    finally:
+                        # ニックネーム変更が完了したらフラグを解除
+                        nick_edit_in_progress.remove(after.id)
+
 
 @bot.event
 async def on_message(message):
