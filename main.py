@@ -247,20 +247,28 @@ async def word_set_count(interaction: discord.Interaction, user: discord.Member,
 async def on_member_update(before, after):
     # ニックネームが変更されたかどうか確認
     if before.nick != after.nick:
-        # ユーザーがすでにニックネームを持っている場合、その元のニックネームを保存
-        if before.nick is not None:
-            original_nicknames[before.id] = before.nick
-        else:
-            original_nicknames[before.id] = before.name  # ニックネームがない場合はデフォルトの名前を保存
+        # ニックネームを変更したのが許可されたユーザーでないか確認
+        if after.id not in ALLOWED_USERS:
+            # ユーザーがすでにニックネームを持っている場合、その元のニックネームを保存
+            if before.nick is not None:
+                original_nicknames[before.id] = before.nick
+            else:
+                original_nicknames[before.id] = before.name  # ニックネームがない場合はデフォルトの名前を保存
 
-        # 元のニックネームに戻す
-        try:
-            await after.edit(nick=original_nicknames[before.id])
-            print(f'{after.name} のニックネームを {original_nicknames[before.id]} に戻しました')
-        except discord.Forbidden:
-            print(f'{after.name} のニックネームを戻す権限がありません')
-        except discord.HTTPException as e:
-            print(f'ニックネームを戻す際にエラーが発生しました: {e}')
+            # 元のニックネームに戻す
+            try:
+                # 再度ニックネームを変更した際に再トリガーしないように一時的にイベントを無視
+                bot.remove_listener(on_member_update)
+                await after.edit(nick=original_nicknames[before.id])
+                print(f'{after.name} のニックネームを {original_nicknames[before.id]} に戻しました')
+            except discord.Forbidden:
+                print(f'{after.name} のニックネームを戻す権限がありません')
+            except discord.HTTPException as e:
+                print(f'ニックネームを戻す際にエラーが発生しました: {e}')
+            finally:
+                # イベントリスナーを再度追加
+                bot.add_listener(on_member_update)
+
 
 @bot.event
 async def on_message(message):
