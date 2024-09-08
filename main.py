@@ -244,6 +244,25 @@ async def word_set_count(interaction: discord.Interaction, user: discord.Member,
     await interaction.response.send_message(f'{user.name} の不適切な単語使用回数を {count} に設定しました。', ephemeral=True)
 
 @bot.event
+async def on_member_update(before, after):
+    # ニックネームが変更されたかどうか確認
+    if before.nick != after.nick:
+        # ユーザーがすでにニックネームを持っている場合、その元のニックネームを保存
+        if before.nick is not None:
+            original_nicknames[before.id] = before.nick
+        else:
+            original_nicknames[before.id] = before.name  # ニックネームがない場合はデフォルトの名前を保存
+
+        # 元のニックネームに戻す
+        try:
+            await after.edit(nick=original_nicknames[before.id])
+            print(f'{after.name} のニックネームを {original_nicknames[before.id]} に戻しました')
+        except discord.Forbidden:
+            print(f'{after.name} のニックネームを戻す権限がありません')
+        except discord.HTTPException as e:
+            print(f'ニックネームを戻す際にエラーが発生しました: {e}')
+
+@bot.event
 async def on_message(message):
     global channel_pairs, user_word_counts, respond_words
     if message.author == bot.user:
