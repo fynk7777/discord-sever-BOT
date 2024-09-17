@@ -17,9 +17,7 @@ COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
 
 # Intentsの設定
 intents = discord.Intents.all()
-intents = discord.Intents.default()
-intents.presences = True  # プレゼンスを取得するための設定
-intents.guilds = True  # サーバー情報を取得するための設定
+
 # Botクライアントの初期化
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -491,10 +489,21 @@ async def handle_bump_notification(message):
 class MyClient(discord.Client):
     async def on_ready(self):
         print(f'Logged in as {self.user} (ID: {self.user.id})')
-        await self.update_all_channel_names()
+        # チャンネル名の更新を1秒ごとに実行
+        self.loop.create_task(self.check_bot_status_loop())
+
+    async def check_bot_status_loop(self):
+        while True:
+            await self.update_all_channel_names()
+            await asyncio.sleep(1)  # 1秒ごとにBOTの状態をチェック
 
     async def update_all_channel_names(self):
+        print("チャンネル名を更新中...")
         guild = discord.utils.get(self.guilds)
+        if not guild:
+            print("Guildが見つかりません。")
+            return
+
         all_online = True  # 全てのBOTがオンラインかどうか
 
         for bot_id, info in BOT_CHANNEL_MAP.items():
@@ -504,6 +513,7 @@ class MyClient(discord.Client):
 
             if target_bot:
                 status = target_bot.status
+                print(f"BOT ID {bot_id} の状態: {status}")
                 if status == discord.Status.online:
                     new_name = f"🟢{base_name}"
                 else:
@@ -514,6 +524,10 @@ class MyClient(discord.Client):
                 if channel and channel.name != new_name:
                     await channel.edit(name=new_name)
                     print(f"チャンネル名を '{new_name}' に変更しました。")
+                elif not channel:
+                    print(f"チャンネル ID {info['channel_id']} が見つかりません。")
+            else:
+                print(f"BOT ID {bot_id} が見つかりません。")
 
         # いずれかのBOTがオフラインの場合にYELLOW_CHANNELを🟡にする
         yellow_channel = guild.get_channel(YELLOW_CHANNEL_ID)
@@ -526,11 +540,11 @@ class MyClient(discord.Client):
             # YELLOW_CHANNELの名前を更新
             if yellow_channel.name != new_name:
                 await yellow_channel.edit(name=new_name)
-                print(f"チャンネル名を '{new_name}' に変更しました。（Yellow Channel）")
-
-    async def on_presence_update(self, before, after):
-        if after.id in BOT_CHANNEL_MAP:  # ターゲットBOTの状態が変わったとき
-            await self.update_all_channel_names()
+                print(f"YELLOWチャンネル名を '{new_name}' に変更しました。")
+            else:
+                print(f"YELLOWチャンネル名はすでに '{new_name}' です。")
+        else:
+            print(f"YELLOWチャンネル ID {YELLOW_CHANNEL_ID} が見つかりません。")
 
 async def send_update_message():
     update_id = 1258593677748736120
