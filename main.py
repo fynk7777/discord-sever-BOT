@@ -17,7 +17,9 @@ COHERE_API_TOKEN = os.getenv("COHERE_API_TOKEN")
 
 # Intentsの設定
 intents = discord.Intents.all()
-
+intents = discord.Intents.default()
+intents.presences = True  # プレゼンスを取得するための設定
+intents.guilds = True  # サーバー情報を取得するための設定
 # Botクライアントの初期化
 bot = commands.Bot(command_prefix='!', intents=intents)
 
