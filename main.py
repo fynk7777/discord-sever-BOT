@@ -44,7 +44,16 @@ BOT_ID = 1256561371127091230
 
 nick_edit_in_progress = set()
 
-
+BOT_CHANNEL_MAP = {
+    1265253957073240195: {"channel_id": 1285683713975386132, "base_name": "colormasterbot"},
+    1271574158295306291: {"channel_id": 1285683752122585222, "base_name": "fortnite-server"},
+    1261624239879094333: {"channel_id": 1285683805096775824, "base_name": "lounge-url"},
+    1258570205815246948: {"channel_id": 1285683876282237089, "base_name": "mikan-mk専用bot"},
+    1274367166979903570: {"channel_id": 1285685038628733021, "base_name": "raimu-server"},
+    1256561371127091230: {"channel_id": 1285683956762673244, "base_name": "ハゲサーバー専用bot"},
+}
+YELLOW_CHANNEL_ID = 1285693670267420684  # いずれかのBOTがオフラインの場合に変更するチャンネルのID
+YELLOW_CHANNEL_BASE_NAME = "監視必要bot"  # いずれかのBOTがオフラインの場合のチャンネル名
 
 
 # 起動時に動作する処理
@@ -476,6 +485,50 @@ async def handle_bump_notification(message):
         timestamp=datetime.now()
     )
     await message.channel.send(embed=notice_embed)
+
+class MyClient(discord.Client):
+    async def on_ready(self):
+        print(f'Logged in as {self.user} (ID: {self.user.id})')
+        await self.update_all_channel_names()
+
+    async def update_all_channel_names(self):
+        guild = discord.utils.get(self.guilds)
+        all_online = True  # 全てのBOTがオンラインかどうか
+
+        for bot_id, info in BOT_CHANNEL_MAP.items():
+            target_bot = guild.get_member(bot_id)
+            channel = guild.get_channel(info["channel_id"])
+            base_name = info["base_name"]
+
+            if target_bot:
+                status = target_bot.status
+                if status == discord.Status.online:
+                    new_name = f"🟢{base_name}"
+                else:
+                    new_name = f"🔴{base_name}"
+                    all_online = False  # いずれかのBOTがオフライン
+
+                # チャンネル名が異なる場合のみ変更
+                if channel and channel.name != new_name:
+                    await channel.edit(name=new_name)
+                    print(f"チャンネル名を '{new_name}' に変更しました。")
+
+        # いずれかのBOTがオフラインの場合にYELLOW_CHANNELを🟡にする
+        yellow_channel = guild.get_channel(YELLOW_CHANNEL_ID)
+        if yellow_channel:
+            if not all_online:
+                new_name = f"🟡{YELLOW_CHANNEL_BASE_NAME}"
+            else:
+                new_name = f"🟢{YELLOW_CHANNEL_BASE_NAME}"  # 全てオンラインなら🟢
+
+            # YELLOW_CHANNELの名前を更新
+            if yellow_channel.name != new_name:
+                await yellow_channel.edit(name=new_name)
+                print(f"チャンネル名を '{new_name}' に変更しました。（Yellow Channel）")
+
+    async def on_presence_update(self, before, after):
+        if after.id in BOT_CHANNEL_MAP:  # ターゲットBOTの状態が変わったとき
+            await self.update_all_channel_names()
 
 async def send_update_message():
     update_id = 1258593677748736120
