@@ -384,7 +384,7 @@ async def on_message(message):
     await bot.process_commands(message)
 
     # 「r!test」が送信された場合に「あ」と返す
-    if message.content == "r!test":
+    if message.content == "b!test" or message.content == "h!test":
         await message.channel.send("GitHubで起動されています")
 
 async def send_random_image(channel):
